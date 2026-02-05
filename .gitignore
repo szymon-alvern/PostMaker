@@ -1,0 +1,23 @@
+# Pliki z sekretami
+.env
+prompts/
+utils.py
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+env/
+venv/
+*.egg-info/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# System
+.DS_Store
+Thumbs.db
