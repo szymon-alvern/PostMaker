@@ -47,11 +47,13 @@ class OpenAIProvider(AIProvider):
             response_format={"type": "json_object"}
         )
         raw_response = response.choices[0].message.content
+        tokens = response.usage.total_tokens
         try:
             clean_response = self._clean_json_text(raw_response)
-        except ValueError as e:
+            result = json.loads(clean_response)
+        except ValueError:
             raise ValueError(f"Błąd JSON. Model zwrócił: '{raw_response[:100]}...'")
-        return json.loads(clean_response)
+        return {"result": result, "tokens": tokens, "model": self.model}
 
 
 class GoogleGenerativeAIProvider(AIProvider):
@@ -68,11 +70,15 @@ class GoogleGenerativeAIProvider(AIProvider):
             generation_config={"response_mime_type": "application/json"}
         )
         raw_response = response.text
+        tokens_input = response.usage_metadata.prompt_token_count
+        tokens_output = response.usage_metadata.candidates_token_count
+        tokens = tokens_input + tokens_output
         try:
             clean_response = self._clean_json_text(raw_response)
-        except ValueError as e:
+            result = json.loads(clean_response)
+        except ValueError:
             raise ValueError(f"Błąd JSON. Model zwrócił: '{raw_response[:100]}...'")
-        return json.loads(clean_response)
+        return {"result": result, "tokens": tokens, "model": self.model}
 
 
 class AnthropicProvider(AIProvider):
@@ -91,11 +97,15 @@ class AnthropicProvider(AIProvider):
             messages=[{"role": "user", "content": content}]
         )
         raw_response = response.content[0].text
+        tokens_input = response.usage.input_tokens
+        tokens_output = response.usage.output_tokens
+        tokens = tokens_input + tokens_output
         try:
             clean_response = self._clean_json_text(raw_response)
-        except ValueError as e:
+            result = json.loads(clean_response)
+        except ValueError:
             raise ValueError(f"Błąd JSON. Model zwrócił: '{raw_response[:100]}...'")
-        return json.loads(clean_response)
+        return {"result": result, "tokens": tokens, "model": self.model}
 
 
 def get_ai_provider(name: str, model: str) -> AIProvider:
