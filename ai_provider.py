@@ -3,6 +3,8 @@ from openai import AsyncOpenAI
 from anthropic import AsyncAnthropic
 from dotenv import load_dotenv
 import os
+import json
+import re
 
 
 load_dotenv()
@@ -17,22 +19,39 @@ class AIProvider:
         self.model = model
 
 
+    def _clean_json_text(self, text: str) -> str:
+        if not text:
+            raise ValueError("Model nic nie zwrócił")
+        text = text.replace("```json", "").replace("```", "").strip()
+        match = re.search(r'\{.*\}', text, re.DOTALL)
+        if match:
+            return match.group(0)
+        else:
+            raise ValueError(f"Błąd JSON. Model zwrócił: '{text[:100]}...'")    
+
+
 class OpenAIProvider(AIProvider):
     def __init__(self, model: str):
         self.client = AsyncOpenAI(api_key=OPENAI_API_KEY)
         self.model = model
 
 
-    async def _call_api(self, prompt: str, company_description: str) -> str:
+    async def _call_api(self, prompt: str, topic: str, company_description: str) -> str:
         content = []
         content.append({"type": "text", "text": prompt})
+        content.append({"type": "text", "text": topic})
         content.append({"type": "text", "text": company_description})
         response = await self.client.chat.completions.create(
             model=self.model,
             messages=[{"role": "user", "content": content}],
             response_format={"type": "json_object"}
         )
-        return response.choices[0].message.content
+        raw_response = response.choices[0].message.content
+        try:
+            clean_response = self._clean_json_text(raw_response)
+        except ValueError as e:
+            raise ValueError(f"Błąd JSON. Model zwrócił: '{raw_response[:100]}...'")
+        return json.loads(clean_response)
 
 
 class GoogleGenerativeAIProvider(AIProvider):
@@ -42,13 +61,18 @@ class GoogleGenerativeAIProvider(AIProvider):
         self.model = model
 
 
-    async def _call_api(self, prompt: str, company_description: str) -> str:
-        content = [prompt, company_description]
+    async def _call_api(self, prompt: str, topic: str, company_description: str) -> str:
+        content = [prompt, topic, company_description]
         response = await self.engine.generate_content_async(
             contents=content,
             generation_config={"response_mime_type": "application/json"}
         )
-        return response.text
+        raw_response = response.text
+        try:
+            clean_response = self._clean_json_text(raw_response)
+        except ValueError as e:
+            raise ValueError(f"Błąd JSON. Model zwrócił: '{raw_response[:100]}...'")
+        return json.loads(clean_response)
 
 
 class AnthropicProvider(AIProvider):
@@ -57,15 +81,21 @@ class AnthropicProvider(AIProvider):
         self.model = model
 
 
-    async def _call_api(self, prompt: str, company_description: str) -> str:
+    async def _call_api(self, prompt: str, topic: str, company_description: str) -> str:
         content = []
         content.append({"type": "text", "text": prompt})
         content.append({"type": "text", "text": company_description})
+        content.append({"type": "text", "text": topic})
         response = await self.client.messages.create(
             model=self.model,
             messages=[{"role": "user", "content": content}]
         )
-        return response.content[0].text
+        raw_response = response.content[0].text
+        try:
+            clean_response = self._clean_json_text(raw_response)
+        except ValueError as e:
+            raise ValueError(f"Błąd JSON. Model zwrócił: '{raw_response[:100]}...'")
+        return json.loads(clean_response)
 
 
 def get_ai_provider(name: str, model: str) -> AIProvider:
