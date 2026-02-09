@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 import uvicorn
-from utils import post_description_generation, CompanyDescriptionRequest, PostResponse
+from utils import post_description_generation, PostRequest, PostResponse
 
 
 app = FastAPI()
@@ -14,8 +14,8 @@ def welcome():
 
 
 @app.post("/generate-post", response_model=PostResponse)
-async def generate_post(request: CompanyDescriptionRequest):
-    post_description = await post_description_generation(request.company_description, request.topic, request.media)
+async def generate_post(request: PostRequest):
+    post_description = await post_description_generation(request.company_description, request.topic, "post", request.media)
     return post_description
 
 

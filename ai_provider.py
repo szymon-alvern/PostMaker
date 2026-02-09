@@ -30,17 +30,35 @@ class AIProvider:
             raise ValueError(f"Błąd JSON. Model zwrócił: '{text[:100]}...'")    
 
 
+    def _prompt_task(self, prompt: str, task: str,company_description: str, topic: str | None=None, topic_list: list[str] | None=None) -> list[str]:
+        if task == "post":
+            if topic:
+                prompt_from_task = [prompt, company_description, topic]
+            else:
+                raise ValueError("Brak tematu do generowania")
+        elif task == "topic":
+            if topic_list:
+                topic_list_string = ", ".join(topic_list)
+                prompt_from_task = [prompt, company_description, topic_list_string]
+            else:
+                raise ValueError("Lista tematów jest pusta")
+        else:
+            raise ValueError(f"Invalid task: {task}")
+        return prompt_from_task
+
+
+
+
 class OpenAIProvider(AIProvider):
     def __init__(self, model: str):
         self.client = AsyncOpenAI(api_key=OPENAI_API_KEY)
         self.model = model
 
 
-    async def _call_api(self, prompt: str, topic: str, company_description: str) -> str:
-        content = []
-        content.append({"type": "text", "text": prompt})
-        content.append({"type": "text", "text": topic})
-        content.append({"type": "text", "text": company_description})
+    async def _call_api(self, prompt: str, task: str, company_description: str, topic: str | None=None, topic_list: list[str] | None=None) -> dict:
+        prompt_from_task = self._prompt_task(prompt, task, company_description, topic, topic_list)
+        prompt_from_task_string = "\n".join(prompt_from_task)
+        content = [{"type": "text", "text": prompt_from_task_string}]
         response = await self.client.chat.completions.create(
             model=self.model,
             messages=[{"role": "user", "content": content}],
@@ -58,13 +76,15 @@ class OpenAIProvider(AIProvider):
 
 class GoogleGenerativeAIProvider(AIProvider):
     def __init__(self, model: str):
-        self.client = genai.configure(api_key=GOOGLE_API_KEY)
+        genai.configure(api_key=GOOGLE_API_KEY)
         self.engine = genai.GenerativeModel(model)
         self.model = model
 
 
-    async def _call_api(self, prompt: str, topic: str, company_description: str) -> str:
-        content = [prompt, topic, company_description]
+    async def _call_api(self, prompt: str, task: str, company_description: str, topic: str | None=None, topic_list: list[str] | None=None) -> dict:
+        prompt_from_task = self._prompt_task(prompt, task, company_description, topic, topic_list)
+        prompt_from_task_string = "\n".join(prompt_from_task)
+        content = prompt_from_task_string
         response = await self.engine.generate_content_async(
             contents=content,
             generation_config={"response_mime_type": "application/json"}
@@ -87,11 +107,10 @@ class AnthropicProvider(AIProvider):
         self.model = model
 
 
-    async def _call_api(self, prompt: str, topic: str, company_description: str) -> str:
-        content = []
-        content.append({"type": "text", "text": prompt})
-        content.append({"type": "text", "text": company_description})
-        content.append({"type": "text", "text": topic})
+    async def _call_api(self, prompt: str, task: str, company_description: str, topic: str | None=None, topic_list: list[str] | None=None) -> dict:
+        prompt_from_task = self._prompt_task(prompt, task, company_description, topic, topic_list)
+        prompt_from_task_string = "\n".join(prompt_from_task)
+        content = prompt_from_task_string
         response = await self.client.messages.create(
             model=self.model,
             messages=[{"role": "user", "content": content}]
