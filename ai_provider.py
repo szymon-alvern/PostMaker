@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 import os
 import json
 import re
-
+from config import TASKS
 
 load_dotenv()
 GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
@@ -30,33 +30,67 @@ class AIProvider:
             raise ValueError(f"Błąd JSON. Model zwrócił: '{text[:100]}...'")    
 
 
-    def _prompt_task(self, prompt: str, task: str,company_description: str, topic: str | None=None, topic_list: list[str] | None=None) -> list[str]:
-        if task == "post":
-            if topic:
-                prompt_from_task = [prompt, company_description, topic]
-            else:
-                raise ValueError("Brak tematu do generowania")
-        elif task == "topic":
-            if topic_list:
-                topic_list_string = ", ".join(topic_list)
-                prompt_from_task = [prompt, company_description, topic_list_string]
-            else:
-                raise ValueError("Lista tematów jest pusta")
+    def _prompt_task(self,* , prompt: str, task: str,company_description: str, 
+        post_description: str | None=None, post_comment: str | None=None, 
+        topic: str | None=None, topic_list: list[str] | None=None) -> list[str]:
+        prompt_from_task = []
+        data = {
+            "prompt": prompt,
+            "company_description": company_description,
+            "post_description": post_description,
+            "post_comment": post_comment,
+            "topic": topic,
+            "topic_list": topic_list
+        }
+
+        if task in TASKS:
+            spec = TASKS.get(task)
+            required = spec["required"]
+            for r in required:
+                value = data[r]
+                if value is None:
+                    raise ValueError(f"Brak {r}")
+            build = spec["build"]    
+            for b in build:   
+                if isinstance(b, str):
+                    value = data[b]
+                elif isinstance(b, tuple):
+                    value_task_name = b[1]
+                    value_list = data[value_task_name]
+                    if value_list is None:
+                        raise ValueError(f"Brak {value_task_name}")  
+                    if isinstance(value_list, list):
+                        str_value_list = []
+                        for i, v in enumerate(value_list):
+                            if isinstance(v, str):
+                                pass
+                            else:
+                                raise ValueError(f"{v} o indeksie {i} jest niedopuszczalnym formatem w {value_task_name}")   
+                            str_value_list.append(v)
+                        value = b[2].join(str_value_list)
+                    else:
+                        raise ValueError(f"{value_task_name} nie jest listą")
+                else:
+                    raise ValueError(f"{b} nie obsługiwany typ")
+                if value is None:
+                    raise ValueError(f"Brak {b}")
+                prompt_from_task.append(value)
         else:
-            raise ValueError(f"Invalid task: {task}")
+            raise ValueError(f"Brak obsługi zadania: {task}")
         return prompt_from_task
-
-
 
 
 class OpenAIProvider(AIProvider):
     def __init__(self, model: str):
+        super().__init__(name="OpenAI", model=model)
         self.client = AsyncOpenAI(api_key=OPENAI_API_KEY)
-        self.model = model
 
 
-    async def _call_api(self, prompt: str, task: str, company_description: str, topic: str | None=None, topic_list: list[str] | None=None) -> dict:
-        prompt_from_task = self._prompt_task(prompt, task, company_description, topic, topic_list)
+    async def _call_api(self, *, prompt: str, task: str, company_description: str, 
+    post_description: str | None=None, post_comment: str | None=None,
+    topic: str | None=None, topic_list: list[str] | None=None) -> dict:
+        prompt_from_task = self._prompt_task(prompt=prompt, task=task, company_description=company_description, 
+        post_description=post_description, post_comment=post_comment, topic=topic, topic_list=topic_list)
         prompt_from_task_string = "\n".join(prompt_from_task)
         content = [{"type": "text", "text": prompt_from_task_string}]
         response = await self.client.chat.completions.create(
@@ -76,13 +110,16 @@ class OpenAIProvider(AIProvider):
 
 class GoogleGenerativeAIProvider(AIProvider):
     def __init__(self, model: str):
+        super().__init__(name="Google Generative AI", model=model)
         genai.configure(api_key=GOOGLE_API_KEY)
         self.engine = genai.GenerativeModel(model)
-        self.model = model
 
 
-    async def _call_api(self, prompt: str, task: str, company_description: str, topic: str | None=None, topic_list: list[str] | None=None) -> dict:
-        prompt_from_task = self._prompt_task(prompt, task, company_description, topic, topic_list)
+    async def _call_api(self, *, prompt: str, task: str, company_description: str, 
+    post_description: str | None=None, post_comment: str | None=None,
+    topic: str | None=None, topic_list: list[str] | None=None) -> dict:
+        prompt_from_task = self._prompt_task(prompt=prompt, task=task, company_description=company_description, 
+        post_description=post_description, post_comment=post_comment, topic=topic, topic_list=topic_list)
         prompt_from_task_string = "\n".join(prompt_from_task)
         content = prompt_from_task_string
         response = await self.engine.generate_content_async(
@@ -103,17 +140,21 @@ class GoogleGenerativeAIProvider(AIProvider):
 
 class AnthropicProvider(AIProvider):
     def __init__(self, model: str):
+        super().__init__(name="Anthropic", model=model)
         self.client = AsyncAnthropic(api_key=ANTHROPIC_API_KEY)
-        self.model = model
 
 
-    async def _call_api(self, prompt: str, task: str, company_description: str, topic: str | None=None, topic_list: list[str] | None=None) -> dict:
-        prompt_from_task = self._prompt_task(prompt, task, company_description, topic, topic_list)
+    async def _call_api(self, *, prompt: str, task: str, company_description: str, 
+    post_description: str | None=None, post_comment: str | None=None,
+    topic: str | None=None, topic_list: list[str] | None=None) -> dict:
+        prompt_from_task = self._prompt_task(prompt=prompt, task=task, company_description=company_description, 
+        post_description=post_description, post_comment=post_comment, topic=topic, topic_list=topic_list)
         prompt_from_task_string = "\n".join(prompt_from_task)
         content = prompt_from_task_string
         response = await self.client.messages.create(
             model=self.model,
-            messages=[{"role": "user", "content": content}]
+            max_tokens=2000,
+            messages=[{"role": "user", "content": content}],
         )
         raw_response = response.content[0].text
         tokens_input = response.usage.input_tokens

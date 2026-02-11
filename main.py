@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 import uvicorn
-from utils import post_description_generation, PostRequest, PostResponse
+from utils import post_description_generation, PostRequest, PostResponse, TopicRequest, RepostRequest
 
 
 app = FastAPI()
@@ -15,8 +15,21 @@ def welcome():
 
 @app.post("/generate-post", response_model=PostResponse)
 async def generate_post(request: PostRequest):
-    post_description = await post_description_generation(request.company_description, request.topic, "post", request.media)
+    post_description = await post_description_generation(company_description=request.company_description, task="post", media=request.media, topic=request.topic)
     return post_description
+
+
+@app.post("/repost", response_model=PostResponse)
+async def repost(request: RepostRequest):
+    repost_description = await post_description_generation(company_description=request.company_description, task="repost", media=request.media, 
+    post_description=request.post_description, post_comment=request.post_comment, topic=request.topic)
+    return repost_description
+
+
+@app.post("/generate-topic", response_model=PostResponse)
+async def generate_topic(request: TopicRequest):
+    topic = await post_description_generation(company_description=request.company_description, task="topic", media=request.media, topic_list=request.topic_list)
+    return topic
 
 
 if __name__ == "__main__":
