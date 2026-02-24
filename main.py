@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 import uvicorn
-from utils import post_description_generation, PostRequest, PostResponse, TopicRequest, RepostRequest
+from utils import post_description_generation, PostRequest, PostResponse, TopicRequest, RepostRequest, EventsData
+from utils import clear_events_date
 
 
 app = FastAPI()
@@ -30,6 +31,14 @@ async def repost(request: RepostRequest):
 async def generate_topic(request: TopicRequest):
     topic = await post_description_generation(company_description=request.company_description, task="topic", media=request.media, topic_list=request.topic_list)
     return topic
+
+
+@app.post("/available/events")
+async def available_events(request: EventsData):
+    events = clear_events_date(request.events_list)
+    request_post = await post_description_generation(task="availability_events", media=request.media, events=events, oryginal_post=request.oryginal_post)
+    return request_post
+
 
 
 if __name__ == "__main__":

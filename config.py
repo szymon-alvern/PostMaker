@@ -1,3 +1,6 @@
+from zoneinfo import available_timezones
+
+
 AI_PROVIDER_LIST = [
     {"name": "OpenAI", "model": "gpt-4o"},
     {"name": "Google Generative AI", "model": "gemini-2.5-flash"},
@@ -10,5 +13,7 @@ TASKS = {
     "repost": {"required": ["prompt","company_description", "topic", "post_description", "post_comment"],
             "build": ["prompt", "company_description", "topic", "post_description", "post_comment"]},
     "topic" : {"required": ["prompt", "company_description", "topic_list"],
-            "build": ["prompt", "company_description", ("join", "topic_list", ", ")]
+            "build": ["prompt", "company_description", ("op", "field", ", ")]},
+    "availability_events" : {"required": ["prompt", "oryginal_post", "events"],
+            "build": ["prompt", "oryginal_post", ("format_events", "events", "\n")]
     }}

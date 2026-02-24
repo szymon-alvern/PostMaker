@@ -1,0 +1,20 @@
+# Ignoruj środowisko wirtualne
+venv/
+.venv/
+env/
+
+# Ignoruj pliki tymczasowe Pythona
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ignoruj pliki systemowe i IDE
+.git/
+.gitignore
+.idea/
+.vscode/
+.DS_Store
+
+# Ignoruj sam Dockerfile i dockerignore (opcjonalnie, dla porządku)
+Dockerfile
+.dockerignore

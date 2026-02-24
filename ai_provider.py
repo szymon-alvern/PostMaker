@@ -30,9 +30,9 @@ class AIProvider:
             raise ValueError(f"Błąd JSON. Model zwrócił: '{text[:100]}...'")    
 
 
-    def _prompt_task(self,* , prompt: str, task: str,company_description: str, 
+    def _prompt_task(self,* , prompt: str, task: str,company_description: str | None=None, 
         post_description: str | None=None, post_comment: str | None=None, 
-        topic: str | None=None, topic_list: list[str] | None=None) -> list[str]:
+        topic: str | None=None, topic_list: list[str] | None=None, events: list[dict] | None = None, oryginal_post: str | None = None) -> list[str]:
         prompt_from_task = []
         data = {
             "prompt": prompt,
@@ -40,7 +40,9 @@ class AIProvider:
             "post_description": post_description,
             "post_comment": post_comment,
             "topic": topic,
-            "topic_list": topic_list
+            "topic_list": topic_list,
+            "events": events,
+            "oryginal_post": oryginal_post
         }
 
         if task in TASKS:
@@ -51,25 +53,45 @@ class AIProvider:
                 if value is None:
                     raise ValueError(f"Brak {r}")
             build = spec["build"]    
-            for b in build:   
+            for b in build: 
                 if isinstance(b, str):
                     value = data[b]
                 elif isinstance(b, tuple):
-                    value_task_name = b[1]
-                    value_list = data[value_task_name]
+                    op = b[0]
+                    field_name = b[1]
+                    sep = b[2]
+                    value_list = data[field_name]
                     if value_list is None:
-                        raise ValueError(f"Brak {value_task_name}")  
+                        raise ValueError(f"Brak {field_name}")      
                     if isinstance(value_list, list):
                         str_value_list = []
                         for i, v in enumerate(value_list):
-                            if isinstance(v, str):
-                                pass
+                            if op == "join":
+                                if isinstance(v, str):
+                                    pass
+                                else:
+                                    raise ValueError(f"{v} o indeksie {i} jest niedopuszczalnym formatem w {field_name}")
+                            elif op == "format_events":
+                                if isinstance(v, dict):
+                                    date = v.get("r_date")
+                                    if date is None:
+                                        raise ValueError(f"W liście o indeksie {i} brak r_date")
+                                    if not isinstance(date, str):
+                                        raise ValueError(f"W liście o indeksie {i}, {date} nie jest str")
+                                    if date.strip() == "":
+                                        raise ValueError(f"W liście o indeksie {i}, r_date jest pusty")
+                                    status = v.get("available")
+                                    if not isinstance(status, bool):
+                                        raise ValueError(f"{status} o indeksie {i} nie jest wartością bool")
+                                    v = f'{date.strip()}-{status}'
+                                else:
+                                    raise ValueError(f"{v} o indeksie {i} jest niedopuszczalnym formatem w {field_name}")   
                             else:
-                                raise ValueError(f"{v} o indeksie {i} jest niedopuszczalnym formatem w {value_task_name}")   
+                                raise ValueError(f"niewłaściwy format {op}")   
                             str_value_list.append(v)
-                        value = b[2].join(str_value_list)
+                        value = sep.join(str_value_list)
                     else:
-                        raise ValueError(f"{value_task_name} nie jest listą")
+                        raise ValueError(f"{field_name} nie jest listą")
                 else:
                     raise ValueError(f"{b} nie obsługiwany typ")
                 if value is None:
@@ -88,9 +110,10 @@ class OpenAIProvider(AIProvider):
 
     async def _call_api(self, *, prompt: str, task: str, company_description: str, 
     post_description: str | None=None, post_comment: str | None=None,
-    topic: str | None=None, topic_list: list[str] | None=None) -> dict:
+    topic: str | None=None, topic_list: list[str] | None=None, events: list[dict] | None = None,
+    oryginal_post: str | None = None) -> dict:
         prompt_from_task = self._prompt_task(prompt=prompt, task=task, company_description=company_description, 
-        post_description=post_description, post_comment=post_comment, topic=topic, topic_list=topic_list)
+        post_description=post_description, post_comment=post_comment, topic=topic, topic_list=topic_list, events=events, oryginal_post=oryginal_post)
         prompt_from_task_string = "\n".join(prompt_from_task)
         content = [{"type": "text", "text": prompt_from_task_string}]
         response = await self.client.chat.completions.create(
@@ -117,9 +140,10 @@ class GoogleGenerativeAIProvider(AIProvider):
 
     async def _call_api(self, *, prompt: str, task: str, company_description: str, 
     post_description: str | None=None, post_comment: str | None=None,
-    topic: str | None=None, topic_list: list[str] | None=None) -> dict:
+    topic: str | None=None, topic_list: list[str] | None=None, events: list[dict] | None = None,
+    oryginal_post: str | None = None) -> dict:
         prompt_from_task = self._prompt_task(prompt=prompt, task=task, company_description=company_description, 
-        post_description=post_description, post_comment=post_comment, topic=topic, topic_list=topic_list)
+        post_description=post_description, post_comment=post_comment, topic=topic, topic_list=topic_list, events=events, oryginal_post=oryginal_post)
         prompt_from_task_string = "\n".join(prompt_from_task)
         content = prompt_from_task_string
         response = await self.engine.generate_content_async(
@@ -146,9 +170,10 @@ class AnthropicProvider(AIProvider):
 
     async def _call_api(self, *, prompt: str, task: str, company_description: str, 
     post_description: str | None=None, post_comment: str | None=None,
-    topic: str | None=None, topic_list: list[str] | None=None) -> dict:
+    topic: str | None=None, topic_list: list[str] | None=None, events: list[dict] | None = None,
+    oryginal_post: str | None = None) -> dict:
         prompt_from_task = self._prompt_task(prompt=prompt, task=task, company_description=company_description, 
-        post_description=post_description, post_comment=post_comment, topic=topic, topic_list=topic_list)
+        post_description=post_description, post_comment=post_comment, topic=topic, topic_list=topic_list, events=events, oryginal_post=oryginal_post)
         prompt_from_task_string = "\n".join(prompt_from_task)
         content = prompt_from_task_string
         response = await self.client.messages.create(
