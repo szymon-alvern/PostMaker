@@ -9,7 +9,7 @@ app = FastAPI()
 
 @app.get("/")
 def welcome():
-    return {"message": "My name is PostMaker",
+    return {"message": "My name is PostMaker-test",
              "version": "1.0.0",
              "author": "Szymon Suchodolski"}
 

@@ -68,7 +68,9 @@ current_post: str | None = None, conversation_context: str | None=None) -> PostR
     except ValueError as e:
         raise ValueError(f"Error loading prompt: {e}")
     try:
-        company_description = load_company(company=company)
+        company_description = None
+        if company:
+            company_description = load_company(company=company)
     except ValueError as e:
         raise ValueError(f"Error loading company description: {e}")
     for provider in AI_PROVIDER_LIST:
