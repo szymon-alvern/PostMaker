@@ -1,7 +1,6 @@
 # Pliki z sekretami
 .env
-prompts/
-utils.py
+descriptions/
 
 # Python
 __pycache__/

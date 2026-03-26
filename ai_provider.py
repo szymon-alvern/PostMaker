@@ -30,9 +30,11 @@ class AIProvider:
             raise ValueError(f"Błąd JSON. Model zwrócił: '{text[:100]}...'")    
 
 
-    def _prompt_task(self,* , prompt: str, task: str,company_description: str | None=None, 
-        post_description: str | None=None, post_comment: str | None=None, 
-        topic: str | None=None, topic_list: list[str] | None=None, events: list[dict] | None = None, oryginal_post: str | None = None) -> list[str]:
+    def _prompt_task(self,* , prompt: str, task: str,
+        company_description: str | None=None, post_description: str | None=None, post_comment: str | None=None, 
+        topic: str | None=None, topic_list: list[str] | None=None, events: list[dict] | None = None, 
+        current_post: str | None = None, conversation_context: str | None = None) -> list[str]:
+
         prompt_from_task = []
         data = {
             "prompt": prompt,
@@ -42,7 +44,8 @@ class AIProvider:
             "topic": topic,
             "topic_list": topic_list,
             "events": events,
-            "oryginal_post": oryginal_post
+            "current_post": current_post,
+            "conversation_context": conversation_context
         }
 
         if task in TASKS:
@@ -108,12 +111,13 @@ class OpenAIProvider(AIProvider):
         self.client = AsyncOpenAI(api_key=OPENAI_API_KEY)
 
 
-    async def _call_api(self, *, prompt: str, task: str, company_description: str, 
+    async def _call_api(self, *, prompt: str, task: str, company_description: str | None=None,
     post_description: str | None=None, post_comment: str | None=None,
     topic: str | None=None, topic_list: list[str] | None=None, events: list[dict] | None = None,
-    oryginal_post: str | None = None) -> dict:
+    current_post: str | None = None, conversation_context: str | None = None) -> dict:
         prompt_from_task = self._prompt_task(prompt=prompt, task=task, company_description=company_description, 
-        post_description=post_description, post_comment=post_comment, topic=topic, topic_list=topic_list, events=events, oryginal_post=oryginal_post)
+        post_description=post_description, post_comment=post_comment, topic=topic, topic_list=topic_list, events=events, 
+        current_post=current_post, conversation_context=conversation_context)
         prompt_from_task_string = "\n".join(prompt_from_task)
         content = [{"type": "text", "text": prompt_from_task_string}]
         response = await self.client.chat.completions.create(
@@ -141,9 +145,10 @@ class GoogleGenerativeAIProvider(AIProvider):
     async def _call_api(self, *, prompt: str, task: str, company_description: str, 
     post_description: str | None=None, post_comment: str | None=None,
     topic: str | None=None, topic_list: list[str] | None=None, events: list[dict] | None = None,
-    oryginal_post: str | None = None) -> dict:
+    current_post: str | None = None, conversation_context: str | None = None) -> dict:
         prompt_from_task = self._prompt_task(prompt=prompt, task=task, company_description=company_description, 
-        post_description=post_description, post_comment=post_comment, topic=topic, topic_list=topic_list, events=events, oryginal_post=oryginal_post)
+        post_description=post_description, post_comment=post_comment, topic=topic, topic_list=topic_list, events=events, 
+        current_post=current_post, conversation_context=conversation_context)
         prompt_from_task_string = "\n".join(prompt_from_task)
         content = prompt_from_task_string
         response = await self.engine.generate_content_async(
@@ -171,9 +176,10 @@ class AnthropicProvider(AIProvider):
     async def _call_api(self, *, prompt: str, task: str, company_description: str, 
     post_description: str | None=None, post_comment: str | None=None,
     topic: str | None=None, topic_list: list[str] | None=None, events: list[dict] | None = None,
-    oryginal_post: str | None = None) -> dict:
+    current_post: str | None = None, conversation_context: str | None = None) -> dict:
         prompt_from_task = self._prompt_task(prompt=prompt, task=task, company_description=company_description, 
-        post_description=post_description, post_comment=post_comment, topic=topic, topic_list=topic_list, events=events, oryginal_post=oryginal_post)
+        post_description=post_description, post_comment=post_comment, topic=topic, topic_list=topic_list, events=events, 
+        current_post=current_post, conversation_context=conversation_context)
         prompt_from_task_string = "\n".join(prompt_from_task)
         content = prompt_from_task_string
         response = await self.client.messages.create(

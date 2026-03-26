@@ -13,7 +13,7 @@ TASKS = {
     "repost": {"required": ["prompt","company_description", "topic", "post_description", "post_comment"],
             "build": ["prompt", "company_description", "topic", "post_description", "post_comment"]},
     "topic" : {"required": ["prompt", "company_description", "topic_list"],
-            "build": ["prompt", "company_description", ("op", "field", ", ")]},
-    "availability_events" : {"required": ["prompt", "oryginal_post", "events"],
-            "build": ["prompt", "oryginal_post", ("format_events", "events", "\n")]
+            "build": ["prompt", "company_description", ("join", "topic_list", ", ")]},
+    "availability_events" : {"required": ["prompt", "current_post", "events"],
+            "build": ["prompt", "current_post", ("format_events", "events", "\n"), "conversation_context"]
     }}
