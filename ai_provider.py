@@ -76,13 +76,13 @@ class AIProvider:
                                     raise ValueError(f"{v} o indeksie {i} jest niedopuszczalnym formatem w {field_name}")
                             elif op == "format_events":
                                 if isinstance(v, dict):
-                                    date = v.get("r_date")
+                                    date = v.get("date")
                                     if date is None:
-                                        raise ValueError(f"W liście o indeksie {i} brak r_date")
+                                        raise ValueError(f"W liście o indeksie {i} brak date")
                                     if not isinstance(date, str):
                                         raise ValueError(f"W liście o indeksie {i}, {date} nie jest str")
                                     if date.strip() == "":
-                                        raise ValueError(f"W liście o indeksie {i}, r_date jest pusty")
+                                        raise ValueError(f"W liście o indeksie {i}, date jest pusty")
                                     status = v.get("available")
                                     if not isinstance(status, bool):
                                         raise ValueError(f"{status} o indeksie {i} nie jest wartością bool")

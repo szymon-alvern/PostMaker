@@ -94,16 +94,13 @@ def clear_events_date(events_list: list[dict])->list[dict]:
         raise ValueError(f'Brak listy')  
     dates = []
     for item in events_list:
-        # date_obj = item.get("date")
-        # if not date_obj:
-        #     raise ValueError(f'Brak daty')  
-        r_date = item.get("r_date")
-        if not r_date:
+        date = item.get("date")
+        if not date:
             raise ValueError(f'Brak dat')
         available = item.get("available")
         if not isinstance(available, bool):
             raise ValueError(f'brak statusu daty')
-        dates.append({"r_date": r_date.strip(), "available": available})
+        dates.append({"date": date.strip(), "available": available})
     return dates
 
 
