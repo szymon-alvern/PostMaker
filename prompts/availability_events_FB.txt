@@ -20,7 +20,7 @@ Zwróć odpowiedź WYŁĄCZNIE jako poprawny obiekt JSON, bez markdown, bez kome
 
 {
   "response": "<tekst odpowiedzi po polsku>",
-  "availability_status": "<FREE_DATE lub ALL_BOOKED>",
+  "availability_status": "<EVENT_DATE_FREE lub EVENT_DATE_BUSY>",
   "next_step": "<ASK_FOR_APPOINTMENT lub ASK_FOR_OTHER_DATE>",
   "details": {
     "dates": [
@@ -31,8 +31,8 @@ Zwróć odpowiedź WYŁĄCZNIE jako poprawny obiekt JSON, bez markdown, bez kome
 
 ### Logika pól
 - `availability_status`:
-  - `FREE_DATE` — jeśli przynajmniej jeden termin z `events_list` ma `available: true`
-  - `ALL_BOOKED` — jeśli wszystkie terminy z `events_list` mają `available: false`
+  - `EVENT_DATE_FREE` — jeśli przynajmniej jeden termin z `events_list` ma `available: true`
+  - `EVENT_DATE_BUSY` — jeśli wszystkie terminy z `events_list` mają `available: false`
 
 - `next_step`:
   - `ASK_FOR_APPOINTMENT` — jeśli przynajmniej jeden termin imprezy jest dostępny
@@ -42,7 +42,7 @@ Zwróć odpowiedź WYŁĄCZNIE jako poprawny obiekt JSON, bez markdown, bez kome
 Przykład dostępnego terminu:
 {
   "response": "Termin 12.06.2026 jest dostępny. Przed formalną rezerwacją zapraszamy na krótkie spotkanie, żeby omówić szczegóły wydarzenia i dopasować najlepsze rozwiązanie. Czy możemy przejść do ustalenia dogodnego terminu takiego spotkania?",
-  "availability_status": "FREE_DATE",
+  "availability_status": "EVENT_DATE_FREE",
   "next_step": "ASK_FOR_APPOINTMENT",
   "details": {
     "dates": [
@@ -54,7 +54,7 @@ Przykład dostępnego terminu:
 Przykład braku dostępności:
 {
   "response": "Niestety termin 15.05.2026 jest już zajęty. Jeśli chcesz, napisz proszę inną datę, a chętnie sprawdzę kolejne możliwe terminy.",
-  "availability_status": "ALL_BOOKED",
+  "availability_status": "EVENT_DATE_BUSY",
   "next_step": "ASK_FOR_OTHER_DATE",
   "details": {
     "dates": [
@@ -88,7 +88,7 @@ Przykład braku dostępności:
    - data spotkania = osobny termin rozmowy dotyczącej organizacji wydarzenia
 16. Odpowiedź ma być krótka, naturalna i jasna.
 17. Jeśli `events_list` zawiera więcej niż jedną datę, wymień status każdej z nich w `details.dates`.
-18. Jeśli przynajmniej jedna data jest dostępna, `availability_status` ma być `FREE_DATE`, nawet jeśli inne daty są niedostępne.
+18. Jeśli przynajmniej jedna data jest dostępna, `availability_status` ma być `EVENT_DATE_FREE`, nawet jeśli inne daty są niedostępne.
 19. Pole `response` ma być spójne z polami `availability_status`, `next_step` i `details`.
 20. Nie używaj emoji.
 21. Nie dodawaj żadnych pól poza tymi zdefiniowanymi w sekcji FORMAT.
