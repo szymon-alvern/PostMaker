@@ -1,0 +1,92 @@
+Zadanie:
+Na podstawie pola `meeting_date_list` oceń, które terminy spotkania są dostępne, i przygotuj odpowiedź dla klienta.
+
+Zwróć wyłącznie jeden poprawny, kompletny obiekt JSON w dokładnie takim formacie:
+{
+  "response": "",
+  "status": "FREE",
+  "error": ""
+}
+
+Dozwolone wartości pola `status`:
+- "FREE"
+- "BUSY"
+- "ERROR"
+
+Nie zwracaj nic poza jednym obiektem JSON.
+Nie dodawaj markdown, komentarzy, wyjaśnień ani dodatkowych pól.
+JSON musi być kompletny i poprawnie zamknięty.
+
+Wejście:
+- `meeting_date_list` to lista tekstów
+- każdy element ma format:
+  `ISO_DATETIME available: BOOLEAN`
+- przykład:
+  `2026-03-29T16:00:00Z available: True`
+
+Znaczenie:
+- część przed `available:` to data i godzina rozpoczęcia
+- część po `available:` określa dostępność
+- `True` oznacza termin dostępny
+- `False` oznacza termin niedostępny
+
+Walidacja:
+Jeśli `meeting_date_list`:
+- nie istnieje,
+- jest puste,
+- nie jest listą tekstów,
+- zawiera pusty element,
+- albo którykolwiek wpis nie pasuje do formatu `ISO_DATETIME available: BOOLEAN`
+
+zwróć:
+{
+  "response": "",
+  "status": "ERROR",
+  "error": "Nieprawidłowe lub niepełne dane meeting_date_list."
+}
+
+Jeśli dane są poprawne:
+- ustaw `"error": ""`
+
+Reguły decyzji:
+- jeśli przynajmniej jeden termin ma `available: True`, ustaw `"status": "FREE"`
+- jeśli wszystkie terminy mają `available: False`, ustaw:
+  - `"status": "BUSY"`
+  - `"response": ""`
+  - `"error": ""`
+
+Reguły tworzenia `response`:
+- twórz `response` tylko wtedy, gdy `status` = `"FREE"`
+- pisz po polsku
+- odpowiedź ma być krótka, uprzejma i naturalna, jak wiadomość do klienta
+- unikaj sztucznego, urzędowego tonu
+- podawaj wyłącznie terminy dostępne
+- nie wspominaj o terminach niedostępnych
+- nie proponuj nowych terminów
+- nie potwierdzaj spotkania za klienta
+- jeśli `conversation_context` wskazuje na trwającą rozmowę, nie dodawaj powitania
+- jeśli z `current_post` można jednoznacznie rozpoznać imię klienta, możesz go użyć; w przeciwnym razie nie zgaduj
+
+Reguły treści:
+- jeśli dostępny jest jeden termin, wskaż go i poproś o potwierdzenie
+- jeśli dostępnych jest kilka terminów, wskaż je i poproś o wybór jednego z nich
+
+Reguły dat i czasu:
+- używaj tylko daty i godziny rozpoczęcia z wpisu
+- nie przeliczaj strefy czasowej
+- jeśli datetime zawiera `Z` lub inną informację o strefie czasowej, zignoruj ją przy prezentacji godziny i zachowaj godzinę dokładnie taką, jak w danych wejściowych
+- format daty: `DD.MM.RRRR`
+- format godziny: `HH:mm`
+- dostępne terminy posortuj rosnąco według wartości wejściowej
+- usuń duplikaty
+
+Formatowanie odpowiedzi:
+- jeśli dostępny jest jeden termin, użyj naturalnej formy potwierdzenia, np. wskazania terminu i prośby o potwierdzenie
+- jeśli kilka terminów przypada tego samego dnia, podaj datę raz, a następnie godziny, np. `29.03.2026 o 14:00 lub 15:00`
+- jeśli dostępne terminy są w różnych dniach, podaj każdy w formacie `DD.MM.RRRR o HH:mm`
+
+Dane wejściowe:
+- current_post: {current_post}
+- conversation_context: {conversation_context}
+- meeting_date_list: {meeting_date_list}
+- media: {media}

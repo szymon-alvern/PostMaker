@@ -36,11 +36,18 @@ class PostResponse(BaseModel):
     error: list[str]
 
 
-class EventsData(BaseModel):
-    events_list: list[dict]
+class BasePostDate(BaseModel):
     media: str
     current_post: str
     conversation_context: str | None=None
+
+
+class EventsDate(BasePostDate):
+    events_list: list[dict]
+
+
+class MeetingDate(BasePostDate):
+    meeting_date_list: list[dict]
 
 
 def load_prompt(task: str, media: str) -> str:
@@ -61,7 +68,7 @@ def load_company(company: str) -> str:
 
 async def post_description_generation(*,task: str | None=None, company: str | None=None, media: str | None=None,post_description: str | None=None, 
 post_comment: str | None=None, topic: str | None=None, topic_list: list[str] | None=None, events: list[dict] | None = None, 
-current_post: str | None = None, conversation_context: str | None=None) -> PostResponse:
+meeting_date_list: list[dict] | None = None, current_post: str | None = None, conversation_context: str | None=None) -> PostResponse:
     error = []
     try:
         prompt = load_prompt(task, media)
@@ -79,7 +86,8 @@ current_post: str | None = None, conversation_context: str | None=None) -> PostR
             current_model = provider["model"]
             provider = get_ai_provider(current_provider, current_model)
             response = await provider._call_api(prompt=prompt, task=task, company_description=company_description,
-            topic=topic, topic_list=topic_list, post_description=post_description,  post_comment=post_comment, events=events, current_post=current_post, conversation_context=conversation_context)
+            topic=topic, topic_list=topic_list, post_description=post_description,  post_comment=post_comment, events=events, 
+            meeting_date_list=meeting_date_list, current_post=current_post, conversation_context=conversation_context)
             return PostResponse(result=response.get("result"), 
                 tokens=response.get("tokens", 0), 
                 model=response.get("model", "Unknown"), 

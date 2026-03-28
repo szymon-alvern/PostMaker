@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 import uvicorn
-from utils import post_description_generation, PostRequest, PostResponse, TopicRequest, RepostRequest, EventsData
+from utils import post_description_generation, PostRequest, PostResponse, TopicRequest, RepostRequest, EventsDate, MeetingDate
 from utils import clear_events_date
 
 
@@ -34,12 +34,15 @@ async def generate_topic(request: TopicRequest):
 
 
 @app.post("/available/events")
-async def available_events(request: EventsData):
+async def available_events(request: EventsDate):
     events = clear_events_date(request.events_list)
-    request_post = await post_description_generation(task="availability_events", media=request.media, events=events, current_post=request.current_post, conversation_context=request.conversation_context)
+    request_post = await post_description_generation(task="availability_events", media=request.media, events=request.events_list, current_post=request.current_post, conversation_context=request.conversation_context)
     return request_post
 
-
+@app.post("/available/meeting")
+async def available_meeting(request: MeetingDate):
+    request_post = await post_description_generation(task="availability_meeting", media=request.media, meeting_date_list=request.meeting_date_list, current_post=request.current_post, conversation_context=request.conversation_context)
+    return request_post
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8003)

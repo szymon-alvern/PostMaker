@@ -32,7 +32,7 @@ class AIProvider:
 
     def _prompt_task(self,* , prompt: str, task: str,
         company_description: str | None=None, post_description: str | None=None, post_comment: str | None=None, 
-        topic: str | None=None, topic_list: list[str] | None=None, events: list[dict] | None = None, 
+        topic: str | None=None, topic_list: list[str] | None=None, events: list[dict] | None = None, meeting_date_list: list[dict] | None = None, 
         current_post: str | None = None, conversation_context: str | None = None) -> list[str]:
 
         prompt_from_task = []
@@ -44,6 +44,7 @@ class AIProvider:
             "topic": topic,
             "topic_list": topic_list,
             "events": events,
+            "meeting_date_list": meeting_date_list,
             "current_post": current_post,
             "conversation_context": conversation_context
         }
@@ -86,9 +87,24 @@ class AIProvider:
                                     status = v.get("available")
                                     if not isinstance(status, bool):
                                         raise ValueError(f"{status} o indeksie {i} nie jest wartością bool")
-                                    v = f'{date.strip()}-{status}'
+                                    v = f'{date.strip()} available: {status}'
                                 else:
                                     raise ValueError(f"{v} o indeksie {i} jest niedopuszczalnym formatem w {field_name}")   
+                            elif op == "format_meeting_date_list":
+                                if isinstance(v, dict):
+                                    date = v.get("start")
+                                    if date is None:
+                                        raise ValueError(f"W liście o indeksie {i} brak date")
+                                    if not isinstance(date, str):
+                                        raise ValueError(f"W liście o indeksie {i}, {date} nie jest str")
+                                    if date.strip() == "":
+                                        raise ValueError(f"W liście o indeksie {i}, date jest pusty")
+                                    status = v.get("available")
+                                    if not isinstance(status, bool):
+                                        raise ValueError(f"{status} o indeksie {i} nie jest wartością bool")
+                                    v = f'{date.strip()} available: {status}'
+                                else:
+                                    raise ValueError(f"{v} o indeksie {i} jest niedopuszczalnym formatem w {field_name}")       
                             else:
                                 raise ValueError(f"niewłaściwy format {op}")   
                             str_value_list.append(v)
@@ -114,10 +130,10 @@ class OpenAIProvider(AIProvider):
     async def _call_api(self, *, prompt: str, task: str, company_description: str | None=None,
     post_description: str | None=None, post_comment: str | None=None,
     topic: str | None=None, topic_list: list[str] | None=None, events: list[dict] | None = None,
-    current_post: str | None = None, conversation_context: str | None = None) -> dict:
+    meeting_date_list: list[dict] | None = None, current_post: str | None = None, conversation_context: str | None = None) -> dict:
         prompt_from_task = self._prompt_task(prompt=prompt, task=task, company_description=company_description, 
         post_description=post_description, post_comment=post_comment, topic=topic, topic_list=topic_list, events=events, 
-        current_post=current_post, conversation_context=conversation_context)
+        meeting_date_list=meeting_date_list, current_post=current_post, conversation_context=conversation_context)
         prompt_from_task_string = "\n".join(prompt_from_task)
         content = [{"type": "text", "text": prompt_from_task_string}]
         response = await self.client.chat.completions.create(
@@ -145,10 +161,10 @@ class GoogleGenerativeAIProvider(AIProvider):
     async def _call_api(self, *, prompt: str, task: str, company_description: str, 
     post_description: str | None=None, post_comment: str | None=None,
     topic: str | None=None, topic_list: list[str] | None=None, events: list[dict] | None = None,
-    current_post: str | None = None, conversation_context: str | None = None) -> dict:
+    meeting_date_list: list[dict] | None = None, current_post: str | None = None, conversation_context: str | None = None) -> dict:
         prompt_from_task = self._prompt_task(prompt=prompt, task=task, company_description=company_description, 
         post_description=post_description, post_comment=post_comment, topic=topic, topic_list=topic_list, events=events, 
-        current_post=current_post, conversation_context=conversation_context)
+        meeting_date_list=meeting_date_list, current_post=current_post, conversation_context=conversation_context)
         prompt_from_task_string = "\n".join(prompt_from_task)
         content = prompt_from_task_string
         response = await self.engine.generate_content_async(
@@ -176,10 +192,10 @@ class AnthropicProvider(AIProvider):
     async def _call_api(self, *, prompt: str, task: str, company_description: str, 
     post_description: str | None=None, post_comment: str | None=None,
     topic: str | None=None, topic_list: list[str] | None=None, events: list[dict] | None = None,
-    current_post: str | None = None, conversation_context: str | None = None) -> dict:
+    meeting_date_list: list[dict] | None = None, current_post: str | None = None, conversation_context: str | None = None) -> dict:
         prompt_from_task = self._prompt_task(prompt=prompt, task=task, company_description=company_description, 
         post_description=post_description, post_comment=post_comment, topic=topic, topic_list=topic_list, events=events, 
-        current_post=current_post, conversation_context=conversation_context)
+        meeting_date_list=meeting_date_list, current_post=current_post, conversation_context=conversation_context)
         prompt_from_task_string = "\n".join(prompt_from_task)
         content = prompt_from_task_string
         response = await self.client.messages.create(
