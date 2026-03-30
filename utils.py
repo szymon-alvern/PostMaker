@@ -50,8 +50,8 @@ class MeetingDate(BasePostDate):
     meeting_date_list: list[dict]
 
 
-class DateList(BaseModel):
-    date_list: list[dict]
+class DatesList(BaseModel):
+    dates_list: list[dict]
 
 
 def load_prompt(task: str, media: str) -> str:
@@ -116,10 +116,10 @@ def clear_events_date(events_list: list[dict])->list[dict]:
     return dates
 
 
-def checking_date(date_list: list[dict]) -> str:
-    if not date_list:
+def checking_date(dates_list: list[dict]) -> str:
+    if not dates_list:
         raise ValueError(f'Brak listy')
-    for item in date_list:
+    for item in dates_list:
         date = item.get("date")
         if not date:
             raise ValueError(f'Brak dat')

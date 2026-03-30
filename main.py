@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 import uvicorn
-from utils import post_description_generation, PostRequest, PostResponse, TopicRequest, RepostRequest, EventsDate, MeetingDate, DateList
+from utils import post_description_generation, PostRequest, PostResponse, TopicRequest, RepostRequest, EventsDate, MeetingDate, DatesList
 from utils import clear_events_date, checking_date
 
 
@@ -46,8 +46,8 @@ async def available_meeting(request: MeetingDate):
 
 
 @app.post("/checking")
-async def checking(request:DateList):
-    response = checking_date(request.date_list)
+async def checking(request:DatesList):
+    response = checking_date(request.dates_list)
     return {"message": response}
 
 if __name__ == "__main__":
