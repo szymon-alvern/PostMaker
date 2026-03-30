@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from dotenv import load_dotenv
 from config import AI_PROVIDER_LIST
-import os
+import os, datetime
 from ai_provider import get_ai_provider
 from typing import Any
 
@@ -52,6 +52,10 @@ class MeetingDate(BasePostDate):
 
 class DatesList(BaseModel):
     dates_list: list[dict]
+
+
+class TimesList(BaseModel):
+    times_list: list[dict]
 
 
 def load_prompt(task: str, media: str) -> str:
@@ -116,7 +120,7 @@ def clear_events_date(events_list: list[dict])->list[dict]:
     return dates
 
 
-def checking_date(dates_list: list[dict]) -> str:
+async def checking_dates_list(dates_list: list[dict]) -> str:
     if not dates_list:
         raise ValueError(f'Brak listy')
     for item in dates_list:
@@ -126,6 +130,24 @@ def checking_date(dates_list: list[dict]) -> str:
         available = item.get("available")
         if not isinstance(available, bool):
             raise ValueError(f'brak statusu daty')
-        if available == True:
+        if available:
             return (f'Dziękuję za zapytanie. W dniu {date} sala jest wolna. Czy możemy umówić się na krótkie spotkanie w celu omówienia szczegółów?')
     return (f'Dziękuję za zapytanie. Niestety w tych dniach sala jest niedostępna. Czy w grę wchodzą inne terminy?')
+
+
+def checking_times_list(times_list: list[dict]) -> str:
+    if not times_list:
+        raise ValueError(f'Brak listy')
+    for item in times_list:
+        start = item.get("start")
+        if not start:
+            raise ValueError(f'Brak czasu')
+        time_utc = datetime.datetime.strptime(start, "%Y-%m-%dT%H:%M:%SZ")
+        date = time_utc.strftime("%d.%m.%Y")
+        hour = time_utc.strftime("%H:%M")
+        available = item.get("available")
+        if not isinstance(available, bool):
+            raise ValueError(f'brak statusu czasu')
+        if available:
+            return (f'Możemy spotkać się w dniu {date} o godzinie {hour}. Proszę o przesłanie numeru telefonu w celu potwierdzenia terminu.')
+    return ("")
