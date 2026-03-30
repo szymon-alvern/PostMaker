@@ -50,6 +50,10 @@ class MeetingDate(BasePostDate):
     meeting_date_list: list[dict]
 
 
+class DateList(BaseModel):
+    date_list: list[dict]
+
+
 def load_prompt(task: str, media: str) -> str:
     prompt_name = f"{task}_{media}.txt"
     if not os.path.exists(f"prompts/{prompt_name}"):
@@ -112,3 +116,16 @@ def clear_events_date(events_list: list[dict])->list[dict]:
     return dates
 
 
+def checking_date(date_list: list[dict]) -> str:
+    if not date_list:
+        raise ValueError(f'Brak listy')
+    for item in date_list:
+        date = item.get("date")
+        if not date:
+            raise ValueError(f'Brak dat')
+        available = item.get("available")
+        if not isinstance(available, bool):
+            raise ValueError(f'brak statusu daty')
+        if available == True:
+            return (f'Dziękuję za zapytanie. W dniu {date} sala jest wolna. Czy możemy umówić się na krótkie spotkanie w celu omówienia szczegółów?')
+    return (f'Dziękuję za zapytanie. Niestety w tych dniach sala jest niedostępna. Czy w grę wchodzą inne terminy?')
