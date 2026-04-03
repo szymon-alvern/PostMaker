@@ -17,5 +17,7 @@ TASKS = {
     "availability_events" : {"required": ["prompt", "current_post", "events", "conversation_context"],
             "build": ["prompt", "current_post", ("format_events", "events", "\n"), "conversation_context"]},
     "availability_meeting" : {"required": ["prompt", "current_post", "meeting_date_list", "conversation_context"],
-            "build": ["prompt", "current_post", ("format_meeting_date_list", "meeting_date_list", "\n"), "conversation_context"]}
+            "build": ["prompt", "current_post", ("format_meeting_date_list", "meeting_date_list", "\n"), "conversation_context"]},
+    "faq" : {"required": ["prompt","company_description", "current_post"],
+            "build": ["prompt","company_description", "current_post", "conversation_context"]}, 
 }

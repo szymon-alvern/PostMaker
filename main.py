@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 import uvicorn
-from utils import post_description_generation, PostRequest, PostResponse, TopicRequest, RepostRequest, EventsDate, MeetingDate, DatesList, TimesList
-from utils import clear_events_date, checking_dates_list, checking_times_list
+from utils import PostRequest, PostResponse, TopicRequest, RepostRequest, EventsDate, MeetingDate, DatesList, TimesList, Faq
+from utils import clear_events_date, checking_dates_list, checking_times_list, post_description_generation
 
 
 app = FastAPI()
@@ -55,6 +55,13 @@ async def checking_date(request:DatesList):
 def checking_time(request:TimesList):
     response = checking_times_list(request.times_list)
     return {"message": response}
+
+
+@app.post("/faq")
+async def faq(request: Faq):
+    response = await post_description_generation(task="faq", media=request.media, current_post=request.current_post, conversation_context=request.conversation_context,
+                company=request.company)
+    return response
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8003)

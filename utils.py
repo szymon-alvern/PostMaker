@@ -58,6 +58,10 @@ class TimesList(BaseModel):
     times_list: list[dict]
 
 
+class Faq(BasePostDate):
+    company: str 
+
+
 def load_prompt(task: str, media: str) -> str:
     prompt_name = f"{task}_{media}.txt"
     if not os.path.exists(f"prompts/{prompt_name}"):
