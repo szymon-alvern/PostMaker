@@ -60,7 +60,7 @@ def checking_time(request:TimesList):
 @app.post("/free_terms")
 def free_terms(request: FreeTermsList):
     response= extract_free_times(terms_list=request.terms_list)
-    return response
+    return {"answer": response}
 
 
 @app.post("/faq")
