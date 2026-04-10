@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 import uvicorn
-from utils import PostRequest, PostResponse, TopicRequest, RepostRequest, EventsDate, MeetingDate, DatesList, TimesList, Faq
-from utils import clear_events_date, checking_dates_list, checking_times_list, post_description_generation
+from utils import PostRequest, PostResponse, TopicRequest, RepostRequest, EventsDate, MeetingDate, DatesList, TimesList, Faq, FreeTermsList
+from utils import clear_events_date, checking_dates_list, checking_times_list, post_description_generation, extract_free_times
 
 
 app = FastAPI()
@@ -55,6 +55,12 @@ async def checking_date(request:DatesList):
 def checking_time(request:TimesList):
     response = checking_times_list(request.times_list)
     return {"message": response}
+
+
+@app.post("/free_terms")
+def free_terms(request: FreeTermsList):
+    response= extract_free_times(terms_list=request.terms_list)
+    return response
 
 
 @app.post("/faq")

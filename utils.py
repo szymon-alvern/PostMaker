@@ -4,6 +4,7 @@ from config import AI_PROVIDER_LIST
 import os, datetime
 from ai_provider import get_ai_provider
 from typing import Any
+from zoneinfo import ZoneInfo
 
 load_dotenv()
 
@@ -60,6 +61,10 @@ class TimesList(BaseModel):
 
 class Faq(BasePostDate):
     company: str 
+
+
+class FreeTermsList(BaseModel):
+    terms_list: list[dict]    
 
 
 def load_prompt(task: str, media: str) -> str:
@@ -143,6 +148,7 @@ def checking_times_list(times_list: list[dict]) -> str:
     if not times_list:
         raise ValueError(f'Brak listy')
     for item in times_list:
+        print("Inside for")
         start = item.get("start")
         if not start:
             raise ValueError(f'Brak czasu')
@@ -150,8 +156,58 @@ def checking_times_list(times_list: list[dict]) -> str:
         date = time_utc.strftime("%d.%m.%Y")
         hour = time_utc.strftime("%H:%M")
         available = item.get("available")
+        print("Checked availability")
+        print(available)
         if not isinstance(available, bool):
             raise ValueError(f'brak statusu czasu')
         if available:
             return (f'Możemy spotkać się w dniu {date} o godzinie {hour}. Proszę o przesłanie numeru telefonu w celu potwierdzenia terminu.')
+        else:
+            return ("BOOKED")
     return ("")
+
+
+def extract_free_times(terms_list: list[dict]) -> str:
+    if not terms_list:
+        return ("Dziś dostępne są terminy przez cały dzień.")
+    item = terms_list[0]
+    start = item.get("start")
+    start_date_time = start.get("dateTime")
+    start_date_obj = datetime.datetime.fromisoformat(start_date_time)
+    warsaw_zone_obj = ZoneInfo("Europe/Warsaw")
+    slot_start = start_date_obj.replace(hour=9, minute=0,second=0, microsecond=0)
+    end_meeting_day = start_date_obj.replace(hour=19, minute=0, second=0, microsecond=0)
+    free_times_list = []
+    while slot_start <= end_meeting_day:
+        slot_end = slot_start + datetime.timedelta(hours=1)
+        flag = True  
+        for item in terms_list:
+            start_item = item.get("start")
+            start_event_str = start_item.get("dateTime")
+            start_event_obj = datetime.datetime.fromisoformat(start_event_str)
+
+            event_start = start_event_obj.astimezone(warsaw_zone_obj)
+            end_item = item.get("end")
+            end_event_str = end_item.get("dateTime")
+            end_event_obj = datetime.datetime.fromisoformat(end_event_str)
+            event_end = end_event_obj.astimezone(warsaw_zone_obj)        
+            if (event_start < slot_end and event_end > slot_start):
+                flag = False
+                break
+        if flag == True:
+            free_times_list.append(slot_start)
+        slot_start = slot_start + datetime.timedelta(hours=1)
+    if not free_times_list:
+        return (f"Niestety w tym dniu nie mamy już wolnych terminów. Prosze o zaproponowanie innego terminu")    
+    hours_list = []
+    day_obj = free_times_list[0]
+    day = day_obj.strftime("%d-%m-%Y")
+    for date in free_times_list:
+        hour = date.strftime("%H:%M")
+        hours_list.append(hour)
+    hours_list_str = ", ".join(hours_list)
+    return (f"W dniu {day} mamy wolne następujące godziny: {hours_list_str}")
+
+
+
+
